@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Blockchain Demo — All-in-One</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous"/>
+
+<style>
+  body{ background:#f8f9fa; }
+  .container-narrow{ max-width: 980px; }
+  .card{ border-radius:.75rem; box-shadow:0 4px 12px rgba(0,0,0,.06); }
+  .mono{ font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace; }
+  .smallmuted{ font-size:.92rem; color:#6c757d; }
+  .grid{ display:grid; gap:1rem; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); }
+  .hash-bad{ background:#ffe3e6; }
+  .hash-ok{ background:#e8ffea; }
+  .code{ padding:.75rem; background:#212529; color:#e9ecef; border-radius:.5rem; }
+  .section{ display:none; }
+  .section.active{ display:block; }
+  .nav-link.active{ font-weight:600; }
+  .btn-xs{ padding:.2rem .5rem; font-size:.8rem; }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+  <div class="container container-narrow">
+    <a class="navbar-brand" href="#" data-section="hash">Blockchain Demo</a>
+    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+    <div id="nav" class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto" id="nav-links">
+        <li class="nav-item"><a class="nav-link active" href="#" data-section="hash">Hash</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-section="block">Block</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-section="chain">Blockchain</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-section="distributed">Distributed</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-section="tokens">Tokens</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-section="coinbase">Coinbase</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container container-narrow my-4">
+
+  <!-- HASH -->
+  <section id="section-hash" class="section active">
+    <div class="card p-4">
+      <h3 class="mb-3">SHA-256 Hash</h3>
+      <p class="smallmuted">Type any text; the SHA-256 hash updates instantly.</p>
+      <div class="mb-3">
+        <label class="form-label">Data</label>
+        <input id="hash-data" class="form-control" value="Hello Blockchain" />
+      </div>
+      <div class="mb-1">
+        <label class="form-label">Hash</label>
+        <input id="hash-out" class="form-control mono" readonly />
+      </div>
+      <div class="smallmuted">Hash of UTF-8 bytes of the Data string.</div>
+    </div>
+  </section>
+
+  <!-- BLOCK -->
+  <section id="section-block" class="section">
+    <div class="card p-4">
+      <h3 class="mb-3">Single Block</h3>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Index</label>
+          <input id="blk-index" class="form-control" type="number" value="1">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Difficulty <span class="badge bg-dark" id="blk-diff-badge">4</span></label>
+          <input id="blk-diff" class="form-range" type="range" min="1" max="6" value="4" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Previous Hash</label>
+          <input id="blk-prev" class="form-control mono" value="0000000000000000000000000000000000000000000000000000000000000000">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Data (JSON or text)</label>
+          <textarea id="blk-data" rows="3" class="form-control">{ "msg": "hello" }</textarea>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Nonce</label>
+          <input id="blk-nonce" class="form-control" type="number" value="0">
+        </div>
+        <div class="col-md-9">
+          <label class="form-label">Hash</label>
+          <input id="blk-hash" class="form-control mono" readonly>
+        </div>
+      </div>
+      <div class="mt-3 d-flex gap-2">
+        <button id="blk-mine" class="btn btn-primary">Mine</button>
+        <button id="blk-stop" class="btn btn-outline-secondary" disabled>Stop</button>
+        <span id="blk-status" class="ms-2 smallmuted"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLOCKCHAIN -->
+  <section id="section-chain" class="section">
+    <div class="card p-4">
+      <h3 class="mb-3">Blockchain</h3>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Difficulty <span class="badge bg-dark" id="chain-diff-badge">3</span></label>
+          <input id="chain-diff" class="form-range" type="range" min="1" max="6" value="3">
+        </div>
+        <div class="col-md-9 d-flex align-items-end gap-2">
+          <button id="chain-add" class="btn btn-primary">Add Block (Mine)</button>
+          <button id="chain-validate" class="btn btn-outline-secondary">Validate</button>
+          <button id="chain-reset" class="btn btn-outline-danger">Reset</button>
+          <span id="chain-status" class="smallmuted"></span>
+        </div>
+      </div>
+      <div id="chain-list" class="grid mt-3"></div>
+    </div>
+  </section>
+
+  <!-- DISTRIBUTED -->
+  <section id="section-distributed" class="section">
+    <div class="card p-4">
+      <h3 class="mb-3">Distributed (2 Nodes)</h3>
+      <p class="smallmuted">Mine blocks independently on Node A and Node B, then resolve to longest valid chain.</p>
+      <div class="row">
+        <div class="col-md-6">
+          <h5>Node A</h5>
+          <div class="d-flex align-items-center gap-3">
+            <div>Diff <span class="badge bg-dark" id="distA-diff-badge">3</span></div>
+            <input id="distA-diff" type="range" class="form-range" min="1" max="6" value="3" style="max-width:260px;">
+            <button id="distA-add" class="btn btn-sm btn-primary">Add (Mine)</button>
+            <button id="distA-tamper" class="btn btn-sm btn-warning">Tamper</button>
+            <button id="distA-reset" class="btn btn-sm btn-outline-danger">Reset</button>
+          </div>
+          <div id="distA-list" class="grid mt-3"></div>
+        </div>
+        <div class="col-md-6">
+          <h5>Node B</h5>
+          <div class="d-flex align-items-center gap-3">
+            <div>Diff <span class="badge bg-dark" id="distB-diff-badge">2</span></div>
+            <input id="distB-diff" type="range" class="form-range" min="1" max="6" value="2" style="max-width:260px;">
+            <button id="distB-add" class="btn btn-sm btn-primary">Add (Mine)</button>
+            <button id="distB-tamper" class="btn btn-sm btn-warning">Tamper</button>
+            <button id="distB-reset" class="btn btn-sm btn-outline-danger">Reset</button>
+          </div>
+          <div id="distB-list" class="grid mt-3"></div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <button id="dist-resolve" class="btn btn-success">Resolve (Adopt Longest Valid)</button>
+        <span id="dist-status" class="smallmuted ms-2"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOKENS -->
+  <section id="section-tokens" class="section">
+    <div class="card p-4">
+      <h3 class="mb-3">Tokens & Balances</h3>
+      <p class="smallmuted">Account model demo. Transactions are included in mined blocks and balances are computed from chain history.</p>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Difficulty <span class="badge bg-dark" id="tok-diff-badge">3</span></label>
+          <input id="tok-diff" type="range" class="form-range" min="1" max="6" value="3">
+        </div>
+        <div class="col-md-9 d-flex align-items-end gap-2">
+          <button id="tok-mine" class="btn btn-primary">Mine Block (include pending txns)</button>
+          <button id="tok-reset" class="btn btn-outline-danger">Reset</button>
+          <span id="tok-status" class="smallmuted"></span>
+        </div>
+      </div>
+
+      <div class="row g-3 mt-1">
+        <div class="col-md-6">
+          <h5 class="mt-3">New Transaction</h5>
+          <div class="row g-2">
+            <div class="col-4"><input id="tok-from" class="form-control" placeholder="From (A/B/C)"></div>
+            <div class="col-4"><input id="tok-to" class="form-control" placeholder="To (A/B/C)"></div>
+            <div class="col-4"><input id="tok-amt" type="number" class="form-control" placeholder="Amount"></div>
+          </div>
+          <div class="mt-2">
+            <button id="tok-add" class="btn btn-sm btn-success">Add Pending Txn</button>
+            <span class="smallmuted" id="tok-add-status"></span>
+          </div>
+
+          <h6 class="mt-3">Pending Transactions</h6>
+          <pre id="tok-pending" class="code mono mb-0" style="min-height:90px"></pre>
+        </div>
+
+        <div class="col-md-6">
+          <h5 class="mt-3">Balances</h5>
+          <table class="table table-sm">
+            <thead><tr><th>Account</th><th class="text-end">Balance</th></tr></thead>
+            <tbody id="tok-balances"></tbody>
+          </table>
+
+          <h6>Chain</h6>
+          <div id="tok-chain" class="grid"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COINBASE -->
+  <section id="section-coinbase" class="section">
+    <div class="card p-4">
+      <h3 class="mb-3">Coinbase (Mining Reward)</h3>
+      <p class="smallmuted">Each mined block includes a coinbase transaction paying the miner a reward.</p>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Difficulty <span class="badge bg-dark" id="cb-diff-badge">3</span></label>
+          <input id="cb-diff" type="range" class="form-range" min="1" max="6" value="3">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Miner Address</label>
+          <input id="cb-miner" class="form-control" value="MinerX">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Reward</label>
+          <input id="cb-reward" type="number" class="form-control" value="50">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button id="cb-mine" class="btn btn-primary w-100">Mine Block (with coinbase)</button>
+        </div>
+      </div>
+      <div class="row g-3 mt-1">
+        <div class="col-md-6">
+          <h6>Balances</h6>
+          <table class="table table-sm">
+            <thead><tr><th>Account</th><th class="text-end">Balance</th></tr></thead>
+            <tbody id="cb-balances"></tbody>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <h6>Chain</h6>
+          <div id="cb-chain" class="grid"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script>
+/* ---------- Tab Switching (manual, no Bootstrap tabs) ---------- */
+function showSection(name){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById('section-' + name);
+  if(el) el.classList.add('active');
+
+  document.querySelectorAll('#nav-links .nav-link').forEach(a=>{
+    a.classList.toggle('active', a.dataset.section === name);
+  });
+}
+document.addEventListener('click', (e)=>{
+  const a = e.target.closest('a[data-section]');
+  if(a){
+    e.preventDefault();
+    showSection(a.dataset.section);
+    // collapse mobile nav
+    const nav = document.getElementById('nav');
+    if(nav.classList.contains('show')) new bootstrap.Collapse(nav).toggle();
+  }
+});
+
+/* ---------- Utils ---------- */
+async function sha256(str) {
+  const enc = new TextEncoder();
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
+function startsWithZeros(hash, n){ return hash.startsWith('0'.repeat(n)); }
+
+/* ---------- HASH ---------- */
+const hashData = ()=>document.getElementById('hash-data');
+const hashOut  = ()=>document.getElementById('hash-out');
+async function updateSingleHash(){ hashOut().value = await sha256(hashData().value); }
+
+/* ---------- Block model ---------- */
+function blockToString(b){
+  const body = {index:b.index,timestamp:b.timestamp,prevHash:b.prevHash,nonce:b.nonce,data:b.data};
+  return JSON.stringify(body);
+}
+async function computeBlockHash(b){ return sha256(blockToString(b)); }
+async function mineBlock(b, difficulty, shouldStop){
+  let i=0;
+  while(true){
+    if(shouldStop && shouldStop()) throw new Error('stopped');
+    b.nonce++;
+    b.hash = await computeBlockHash(b);
+    if(startsWithZeros(b.hash, difficulty)) return b;
+    if((++i % 500)===0) await sleep(0); // yield to UI
+  }
+}
+
+/* ---------- BLOCK (UI) ---------- */
+(function(){
+  const ix=document.getElementById('blk-index');
+  const diff=document.getElementById('blk-diff');
+  const diffBadge=document.getElementById('blk-diff-badge');
+  const prev=document.getElementById('blk-prev');
+  const data=document.getElementById('blk-data');
+  const nonce=document.getElementById('blk-nonce');
+  const out=document.getElementById('blk-hash');
+  const btnMine=document.getElementById('blk-mine');
+  const btnStop=document.getElementById('blk-stop');
+  const status=document.getElementById('blk-status');
+  let stopFlag=false;
+
+  diff.addEventListener('input', ()=> diffBadge.textContent=diff.value);
+
+  async function recalc(){
+    const b={ index: Number(ix.value)||0, timestamp:0, prevHash: prev.value.trim(), nonce: Number(nonce.value)||0, data: data.value };
+    out.value=await computeBlockHash(b);
+    out.classList.toggle('hash-ok', startsWithZeros(out.value, Number(diff.value)));
+    out.classList.toggle('hash-bad', !startsWithZeros(out.value, Number(diff.value)));
+  }
+  [ix, prev, data, nonce, diff].forEach(el=>el.addEventListener('input', recalc));
+  recalc();
+
+  btnMine.addEventListener('click', async ()=>{
+    stopFlag=false; btnMine.disabled=true; btnStop.disabled=true; status.textContent='Mining...';
+    btnStop.disabled=false;
+    try{
+      const b={ index: Number(ix.value)||0, timestamp:0, prevHash: prev.value.trim(), nonce: Number(nonce.value)||0, data: data.value };
+      await mineBlock(b, Number(diff.value), ()=>stopFlag);
+      ix.value=b.index; nonce.value=b.nonce; out.value=b.hash;
+      out.classList.add('hash-ok'); out.classList.remove('hash-bad');
+      status.textContent=`Mined! Nonce=${b.nonce}`;
+    }catch(e){ status.textContent='Stopped.'; }
+    btnMine.disabled=false; btnStop.disabled=true;
+  });
+  btnStop.addEventListener('click', ()=>{ stopFlag=true; });
+})();
+
+/* ---------- Blockchain core ---------- */
+class SimpleBlock {
+  constructor(index, prevHash, data){
+    this.index=index;
+    this.timestamp=Date.now();
+    this.prevHash=prevHash;
+    this.nonce=0;
+    this.data=data;
+    this.hash='';
+  }
+}
+class SimpleChain {
+  constructor(difficulty=3){
+    this.difficulty=difficulty;
+    this.blocks=[this.genesis()];
+  }
+  genesis(){
+    const b=new SimpleBlock(0,'0'.repeat(64),'GENESIS');
+    b.hash='0'.repeat(64);
+    return b;
+  }
+  async addBlock(data, mine=true){
+    const prev=this.blocks[this.blocks.length-1];
+    const b=new SimpleBlock(prev.index+1, prev.hash, data);
+    if(mine) await mineBlock(b, this.difficulty);
+    else b.hash = await computeBlockHash(b);
+    this.blocks.push(b);
+  }
+  async recalcFrom(i=1){
+    for(let k=i;k<this.blocks.length;k++){
+      const prev=this.blocks[k-1];
+      this.blocks[k].prevHash=prev.hash;
+      this.blocks[k].hash=await computeBlockHash(this.blocks[k]);
+    }
+  }
+  async validate(){
+    for(let k=1;k<this.blocks.length;k++){
+      const a=this.blocks[k-1], b=this.blocks[k];
+      if(b.prevHash!==a.hash) return {ok:false, at:k, reason:'prevHash mismatch'};
+      const h=await computeBlockHash(b);
+      if(h!==b.hash) return {ok:false, at:k, reason:'hash mismatch'};
+      if(!startsWithZeros(b.hash,this.difficulty)) return {ok:false, at:k, reason:'difficulty fail'};
+    }
+    return {ok:true};
+  }
+}
+
+/* ---------- BLOCKCHAIN (UI) ---------- */
+(function(){
+  const diff=document.getElementById('chain-diff');
+  const diffBadge=document.getElementById('chain-diff-badge');
+  const addBtn=document.getElementById('chain-add');
+  const validateBtn=document.getElementById('chain-validate');
+  const resetBtn=document.getElementById('chain-reset');
+  const status=document.getElementById('chain-status');
+  const list=document.getElementById('chain-list');
+
+  let chain=new SimpleChain(Number(diff.value));
+  diff.addEventListener('input', ()=>{ diffBadge.textContent=diff.value; chain.difficulty=Number(diff.value); render(); });
+
+  function blockCard(b,i){
+    const v=document.createElement('div');
+    v.className='card p-3';
+    v.innerHTML=`
+      <div class="d-flex justify-content-between">
+        <div><strong>Block ${i}</strong></div>
+        <span class="badge bg-secondary">${new Date(b.timestamp).toLocaleTimeString()}</span>
+      </div>
+      <div class="mt-2 smallmuted">Prev Hash</div>
+      <input class="form-control mono mb-2 prev" value="${b.prevHash}">
+      <div class="smallmuted">Data</div>
+      <textarea rows="2" class="form-control data">${typeof b.data==='string'?b.data:JSON.stringify(b.data)}</textarea>
+      <div class="row mt-2 g-2">
+        <div class="col-4"><div class="smallmuted">Nonce</div><input class="form-control nonce" type="number" value="${b.nonce}"></div>
+        <div class="col-8"><div class="smallmuted">Hash</div><input class="form-control mono hash" value="${b.hash}" readonly></div>
+      </div>
+      <div class="mt-2 d-flex gap-2">
+        <button class="btn btn-sm btn-primary mine">Mine</button>
+        <button class="btn btn-sm btn-outline-secondary recalc">Recalc</button>
+      </div>
+    `;
+    const prev=v.querySelector('.prev');
+    const data=v.querySelector('.data');
+    const nonce=v.querySelector('.nonce');
+    const hash=v.querySelector('.hash');
+    const mine=v.querySelector('.mine');
+    const recalc=v.querySelector('.recalc');
+
+    function paint(){
+      hash.value=b.hash;
+      hash.classList.toggle('hash-ok', startsWithZeros(b.hash, chain.difficulty));
+      hash.classList.toggle('hash-bad', !startsWithZeros(b.hash, chain.difficulty));
+    }
+
+    prev.addEventListener('input', async ()=>{
+      b.prevHash=prev.value.trim();
+      b.hash=await computeBlockHash(b);
+      paint();
+    });
+    data.addEventListener('input', async ()=>{
+      b.data=data.value;
+      b.hash=await computeBlockHash(b);
+      paint();
+    });
+    nonce.addEventListener('input', async ()=>{
+      b.nonce=Number(nonce.value)||0;
+      b.hash=await computeBlockHash(b);
+      paint();
+    });
+
+    mine.addEventListener('click', async ()=>{
+      mine.disabled=true; recalc.disabled=true;
+      await mineBlock(b, chain.difficulty);
+      nonce.value=b.nonce; paint();
+      await chain.recalcFrom(i+1);
+      render();
+    });
+    recalc.addEventListener('click', async ()=>{
+      b.hash=await computeBlockHash(b); paint();
+      await chain.recalcFrom(i+1); render();
+    });
+
+    paint();
+    return v;
+  }
+
+  function render(){
+    list.innerHTML='';
+    chain.blocks.forEach((b,i)=>{ if(i===0) return; list.appendChild(blockCard(b,i)); });
+  }
+
+  resetBtn.addEventListener('click', ()=>{ chain=new SimpleChain(Number(diff.value)); status.textContent='Reset.'; list.innerHTML=''; });
+  addBtn.addEventListener('click', async ()=>{
+    addBtn.disabled=true; status.textContent='Mining...';
+    await chain.addBlock(`Block #${chain.blocks.length}`);
+    status.textContent='Mined.'; addBtn.disabled=false; render();
+  });
+  validateBtn.addEventListener('click', async ()=>{
+    const v=await chain.validate();
+    status.textContent = v.ok ? 'Chain valid ✅' : `Invalid at block ${v.at}: ${v.reason} ❌`;
+  });
+
+  (async()=>{ await chain.addBlock('Block #1'); await chain.addBlock('Block #2'); render(); })();
+})();
+
+/* ---------- DISTRIBUTED (UI) ---------- */
+(function(){
+  const A = { diffEl:'distA-diff', badge:'distA-diff-badge', add:'distA-add', tamper:'distA-tamper', reset:'distA-reset', list:'distA-list', chain:null };
+  const B = { diffEl:'distB-diff', badge:'distB-diff-badge', add:'distB-add', tamper:'distB-tamper', reset:'distB-reset', list:'distB-list', chain:null };
+  const status=document.getElementById('dist-status');
+
+  function setupNode(node){
+    const dEl=document.getElementById(node.diffEl);
+    const badge=document.getElementById(node.badge);
+    const list=document.getElementById(node.list);
+    node.chain=new SimpleChain(Number(dEl.value));
+    badge.textContent=dEl.value;
+    dEl.addEventListener('input', ()=>{ node.chain.difficulty=Number(dEl.value); badge.textContent=dEl.value; render(node); });
+
+    function render(n){
+      list.innerHTML='';
+      n.chain.blocks.forEach((b,i)=>{ if(i===0) return;
+        const card=document.createElement('div');
+        card.className='card p-3';
+        card.innerHTML=`
+          <div class="d-flex justify-content-between"><strong>Block ${i}</strong><span class="badge bg-secondary">${new Date(b.timestamp).toLocaleTimeString()}</span></div>
+          <div class="smallmuted mt-1">Data</div>
+          <input class="form-control mb-1 data" value="${typeof b.data==='string'?b.data:JSON.stringify(b.data)}">
+          <div class="smallmuted">Hash</div>
+          <input class="form-control mono hash" value="${b.hash}" readonly>
+        `;
+        list.appendChild(card);
+      });
+    }
+    node.render=()=>render(node);
+  }
+  setupNode(A); setupNode(B);
+
+  document.getElementById(A.add).addEventListener('click', async ()=>{ await A.chain.addBlock(`A #${A.chain.blocks.length}`); A.render(); });
+  document.getElementById(B.add).addEventListener('click', async ()=>{ await B.chain.addBlock(`B #${B.chain.blocks.length}`); B.render(); });
+
+  document.getElementById(A.tamper).addEventListener('click', async ()=>{
+    if(A.chain.blocks.length>1){ A.chain.blocks[1].data='TAMPERED'; A.chain.blocks[1].hash=await computeBlockHash(A.chain.blocks[1]); await A.chain.recalcFrom(2); A.render(); }
+  });
+  document.getElementById(B.tamper).addEventListener('click', async ()=>{
+    if(B.chain.blocks.length>1){ B.chain.blocks[1].data='TAMPERED'; B.chain.blocks[1].hash=await computeBlockHash(B.chain.blocks[1]); await B.chain.recalcFrom(2); B.render(); }
+  });
+
+  document.getElementById(A.reset).addEventListener('click', ()=>{ A.chain=new SimpleChain(Number(document.getElementById(A.diffEl).value)); A.render(); });
+  document.getElementById(B.reset).addEventListener('click', ()=>{ B.chain=new SimpleChain(Number(document.getElementById(B.diffEl).value)); B.render(); });
+
+  document.getElementById('dist-resolve').addEventListener('click', async ()=>{
+    const va=await A.chain.validate(), vb=await B.chain.validate();
+    const la=A.chain.blocks.length, lb=B.chain.blocks.length;
+
+    function cloneToChain(src){
+      const c=new SimpleChain();
+      c.blocks = src.blocks.map((r,i)=>Object.assign(new SimpleBlock(i, r.prevHash, r.data), {timestamp:r.timestamp, nonce:r.nonce, hash:r.hash}));
+      c.difficulty=src.difficulty;
+      return c;
+    }
+
+    if(vb.ok && (!va.ok || lb>la)){ A.chain = cloneToChain(B.chain); A.render(); status.textContent='Node A adopted Node B chain.'; }
+    else if(va.ok && (!vb.ok || la>lb)){ B.chain = cloneToChain(A.chain); B.render(); status.textContent='Node B adopted Node A chain.'; }
+    else { status.textContent='No change (same length or both invalid).'; }
+  });
+})();
+
+/* ---------- TOKENS ---------- */
+(function(){
+  class TokenChain extends SimpleChain{
+    constructor(diff=3){ super(diff); this.pending=[]; this.genesisBalances={A:100,B:50,C:50}; }
+    balances(){
+      const bal=Object.assign({}, this.genesisBalances);
+      for(let i=1;i<this.blocks.length;i++){
+        const txs=this.blocks[i].data?.txs||[];
+        txs.forEach(tx=>{
+          if(tx.from) bal[tx.from]=(bal[tx.from]||0)-tx.amount;
+          if(tx.to) bal[tx.to]=(bal[tx.to]||0)+tx.amount;
+        });
+      }
+      return bal;
+    }
+    canApplyAll(txs){
+      const bal=this.balances();
+      for(const tx of txs){
+        if(tx.from){
+          bal[tx.from]=(bal[tx.from]||0)-tx.amount;
+          if(bal[tx.from]<0) return false;
+        }
+        if(tx.to) bal[tx.to]=(bal[tx.to]||0)+tx.amount;
+      }
+      return true;
+    }
+    async minePending(){
+      if(this.pending.length===0) return null;
+      if(!this.canApplyAll(this.pending)) throw new Error('Insufficient balance for one or more txs');
+      const prev=this.blocks[this.blocks.length-1];
+      const b=new SimpleBlock(prev.index+1, prev.hash, {txs:this.pending.slice()});
+      await mineBlock(b, this.difficulty);
+      this.blocks.push(b); this.pending=[]; return b;
+    }
+  }
+
+  const diffEl=document.getElementById('tok-diff');
+  const diffBadge=document.getElementById('tok-diff-badge');
+  const status=document.getElementById('tok-status');
+  const addBtn=document.getElementById('tok-add');
+  const mineBtn=document.getElementById('tok-mine');
+  const resetBtn=document.getElementById('tok-reset');
+  const fromEl=document.getElementById('tok-from');
+  const toEl=document.getElementById('tok-to');
+  const amtEl=document.getElementById('tok-amt');
+  const pendEl=document.getElementById('tok-pending');
+  const balBody=document.getElementById('tok-balances');
+  const chainDiv=document.getElementById('tok-chain');
+  const addStatus=document.getElementById('tok-add-status');
+
+  let tch=new TokenChain(Number(diffEl.value));
+  diffEl.addEventListener('input', ()=>{ diffBadge.textContent=diffEl.value; tch.difficulty=Number(diffEl.value); });
+
+  function renderPending(){ pendEl.textContent = JSON.stringify(tch.pending, null, 2) || '[]'; }
+  function renderBalances(){
+    balBody.innerHTML='';
+    const bal=tch.balances();
+    for(const k of Object.keys(bal).sort()){
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${k}</td><td class="text-end">${bal[k]}</td>`;
+      balBody.appendChild(tr);
+    }
+  }
+  function renderChain(){
+    chainDiv.innerHTML='';
+    tch.blocks.forEach((b,i)=>{ if(i===0) return;
+      const card=document.createElement('div'); card.className='card p-3';
+      card.innerHTML=`
+        <div class="d-flex justify-content-between"><strong>Block ${i}</strong><span class="badge bg-secondary">${new Date(b.timestamp).toLocaleTimeString()}</span></div>
+        <div class="smallmuted">Txns</div>
+        <pre class="code mono mb-0">${JSON.stringify(b.data.txs,null,2)}</pre>
+      `;
+      chainDiv.appendChild(card);
+    });
+  }
+  function renderAll(){ renderPending(); renderBalances(); renderChain(); }
+
+  addBtn.addEventListener('click', ()=>{
+    const from=fromEl.value.trim().toUpperCase();
+    const to=toEl.value.trim().toUpperCase();
+    const amount=Number(amtEl.value);
+    if(!to || !(amount>0)){ addStatus.textContent='Enter valid "to" and positive amount.'; return; }
+    if(from && from===to){ addStatus.textContent='From and To cannot be same.'; return; }
+    const tx={ from: from || null, to, amount };
+    tch.pending.push(tx);
+    addStatus.textContent='Added.';
+    fromEl.value=''; toEl.value=''; amtEl.value='';
+    renderPending();
+  });
+
+  mineBtn.addEventListener('click', async ()=>{
+    mineBtn.disabled=true; status.textContent='Mining...';
+    try{ await tch.minePending(); status.textContent='Mined.'; }catch(e){ status.textContent=e.message; }
+    mineBtn.disabled=false; renderAll();
+  });
+
+  resetBtn.addEventListener('click', ()=>{ tch=new TokenChain(Number(diffEl.value)); status.textContent='Reset.'; renderAll(); });
+
+  renderAll();
+})();
+
+/* ---------- COINBASE ---------- */
+(function(){
+  class RewardChain extends SimpleChain{
+    constructor(diff=3, miner='MinerX', reward=50){
+      super(diff); this.miner=miner; this.reward=reward; this.balancesMap={}; this.recomputeBalances();
+    }
+    recomputeBalances(){
+      const bal={};
+      for(let i=1;i<this.blocks.length;i++){
+        const txs=this.blocks[i].data?.txs||[];
+        txs.forEach(tx=>{
+          if(tx.from) bal[tx.from]=(bal[tx.from]||0)-tx.amount;
+          if(tx.to) bal[tx.to]=(bal[tx.to]||0)+tx.amount;
+        });
+      }
+      this.balancesMap=bal;
+    }
+    async mineCoinbase(){
+      const prev=this.blocks[this.blocks.length-1];
+      const coinbase={from:null, to:this.miner, amount:Number(this.reward)};
+      const b=new SimpleBlock(prev.index+1, prev.hash, {txs:[coinbase]});
+      await mineBlock(b, this.difficulty);
+      this.blocks.push(b); this.recomputeBalances(); return b;
+    }
+  }
+
+  const diffEl=document.getElementById('cb-diff');
+  const diffBadge=document.getElementById('cb-diff-badge');
+  const minerEl=document.getElementById('cb-miner');
+  const rewardEl=document.getElementById('cb-reward');
+  const mineBtn=document.getElementById('cb-mine');
+  const balBody=document.getElementById('cb-balances');
+  const chainDiv=document.getElementById('cb-chain');
+
+  let cb=new RewardChain(Number(diffEl.value), minerEl.value, Number(rewardEl.value));
+
+  function renderBalances(){
+    balBody.innerHTML='';
+    const map=Object.assign({[minerEl.value]: cb.balancesMap[minerEl.value]||0}, cb.balancesMap);
+    for(const k of Object.keys(map).sort()){
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${k}</td><td class="text-end">${map[k]||0}</td>`;
+      balBody.appendChild(tr);
+    }
+  }
+  function renderChain(){
+    chainDiv.innerHTML='';
+    cb.blocks.forEach((b,i)=>{ if(i===0) return;
+      const card=document.createElement('div'); card.className='card p-3';
+      card.innerHTML=`
+        <div class="d-flex justify-content-between"><strong>Block ${i}</strong><span class="badge bg-secondary">${new Date(b.timestamp).toLocaleTimeString()}</span></div>
+        <div class="smallmuted">Txns</div>
+        <pre class="code mono mb-0">${JSON.stringify(b.data.txs,null,2)}</pre>
+      `;
+      chainDiv.appendChild(card);
+    });
+  }
+  function renderAll(){ renderBalances(); renderChain(); }
+
+  diffEl.addEventListener('input', ()=>{ diffBadge.textContent=diffEl.value; cb.difficulty=Number(diffEl.value); });
+  minerEl.addEventListener('input', ()=>{ cb.miner=minerEl.value.trim()||'MinerX'; renderBalances(); });
+  rewardEl.addEventListener('input', ()=>{ cb.reward=Number(rewardEl.value)||0; });
+  mineBtn.addEventListener('click', async ()=>{ mineBtn.disabled=true; await cb.mineCoinbase(); mineBtn.disabled=false; renderAll(); });
+
+  renderAll();
+})();
+
+/* ---------- boot ---------- */
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Hash tab init
+  hashData().addEventListener('input', updateSingleHash);
+  updateSingleHash();
+
+  // ensure default section
+  showSection('hash');
+});
+</script>
+</body>
+</html>
