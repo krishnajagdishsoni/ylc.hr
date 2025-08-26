@@ -167,6 +167,42 @@
     </div>
   </section>
 
+   <!-- DISTRIBUTED -->
+  <section id="section-distributed" class="section">
+    <div class="card p-4">
+      <h3 class="mb-3">Distributed (2 Nodes)</h3>
+      <p class="smallmuted">Mine blocks independently on Node A and Node B, then resolve to longest valid chain.</p>
+      <div class="row">
+        <div class="col-md-6">
+          <h5>Node A</h5>
+          <div class="d-flex align-items-center gap-3">
+            <div>Diff <span class="badge bg-dark" id="distA-diff-badge">3</span></div>
+            <input id="distA-diff" type="range" class="form-range" min="1" max="6" value="3" style="max-width:260px;">
+            <button id="distA-add" class="btn btn-sm btn-primary">Add (Mine)</button>
+            <button id="distA-tamper" class="btn btn-sm btn-warning">Tamper</button>
+            <button id="distA-reset" class="btn btn-sm btn-outline-danger">Reset</button>
+          </div>
+          <div id="distA-list" class="grid mt-3"></div>
+        </div>
+        <div class="col-md-6">
+          <h5>Node B</h5>
+          <div class="d-flex align-items-center gap-3">
+            <div>Diff <span class="badge bg-dark" id="distB-diff-badge">2</span></div>
+            <input id="distB-diff" type="range" class="form-range" min="1" max="6" value="2" style="max-width:260px;">
+            <button id="distB-add" class="btn btn-sm btn-primary">Add (Mine)</button>
+            <button id="distB-tamper" class="btn btn-sm btn-warning">Tamper</button>
+            <button id="distB-reset" class="btn btn-sm btn-outline-danger">Reset</button>
+          </div>
+          <div id="distB-list" class="grid mt-3"></div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <button id="dist-resolve" class="btn btn-success">Resolve (Adopt Longest Valid)</button>
+        <span id="dist-status" class="smallmuted ms-2"></span>
+      </div>
+    </div>
+  </section>
+
   <!-- COINBASE -->
   <section id="section-coinbase" class="section">
     <div class="card p-4">
